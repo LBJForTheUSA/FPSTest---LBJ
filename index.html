@@ -30,6 +30,21 @@
     <script src="cannon.js"></script>
     <script src="hammer.min.js"></script>
     
+    <!-- Asset path remapping for GitHub Pages deployment -->
+    <script>
+        // Intercept asset loading to remap paths from /assets/* to root
+        const originalFetch = window.fetch;
+        window.fetch = function(...args) {
+            let url = args[0];
+            if (typeof url === 'string') {
+                // Remap asset paths from /assets/musics/*, /assets/sounds/*, etc. to root
+                url = url.replace(/^\/assets\/(musics|sounds|models|skybox)\//, '/');
+            }
+            args[0] = url;
+            return originalFetch.apply(this, args);
+        };
+    </script>
+    
     <!-- Bundled app (contains all game code compiled) -->
     <script src="app.js"></script>
 </body>
