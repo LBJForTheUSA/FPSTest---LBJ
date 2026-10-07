@@ -30,18 +30,48 @@
     <script src="cannon.js"></script>
     <script src="hammer.min.js"></script>
     
-    <!-- Asset path remapping for GitHub Pages deployment -->
+    <!-- Asset path remapping for GitHub Pages root-level deployment -->
     <script>
-        // Intercept asset loading to remap paths from /assets/* to root
+        // Intercept all fetch and XMLHttpRequest calls to remap asset paths
+        // from /assets/{type}/* to root-level files
+        
         const originalFetch = window.fetch;
         window.fetch = function(...args) {
             let url = args[0];
             if (typeof url === 'string') {
-                // Remap asset paths from /assets/musics/*, /assets/sounds/*, etc. to root
-                url = url.replace(/^\/assets\/(musics|sounds|models|skybox)\//, '/');
+                // Remap all asset folder references to root
+                url = url.replace(/\/assets\/musics\//g, '/');
+                url = url.replace(/\/assets\/sounds\//g, '/');
+                url = url.replace(/\/assets\/models\/weapons\/rifle\//g, '/');
+                url = url.replace(/\/assets\/models\/skull\//g, '/');
+                url = url.replace(/\/assets\/images\//g, '/');
+                url = url.replace(/\/assets\/skybox\//g, '/skybox_');
             }
             args[0] = url;
             return originalFetch.apply(this, args);
+        };
+
+        // Also intercept XMLHttpRequest for asset loading
+        const originalOpen = XMLHttpRequest.prototype.open;
+        XMLHttpRequest.prototype.open = function(method, url, ...rest) {
+            if (typeof url === 'string') {
+                url = url.replace(/\/assets\/musics\//g, '/');
+                url = url.replace(/\/assets\/sounds\//g, '/');
+                url = url.replace(/\/assets\/models\/weapons\/rifle\//g, '/');
+                url = url.replace(/\/assets\/models\/skull\//g, '/');
+                url = url.replace(/\/assets\/images\//g, '/');
+                url = url.replace(/\/assets\/skybox\//g, '/skybox_');
+            }
+            return originalOpen.call(this, method, url, ...rest);
+        };
+
+        // Intercept BABYLON.CubeTexture to handle skybox path separately
+        const originalCubeTexture = BABYLON.CubeTexture;
+        BABYLON.CubeTexture = function(rootUrl, scene, extensions, noMipmap, files, onLoad, onError, format, prefiltered, forcedExtension) {
+            if (typeof rootUrl === 'string' && rootUrl.includes('assets/skybox')) {
+                rootUrl = rootUrl.replace('assets/skybox/skybox', 'skybox_');
+            }
+            return originalCubeTexture.call(this, rootUrl, scene, extensions, noMipmap, files, onLoad, onError, format, prefiltered, forcedExtension);
         };
     </script>
     
